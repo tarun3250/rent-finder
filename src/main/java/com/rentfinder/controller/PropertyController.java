@@ -34,7 +34,11 @@ public class PropertyController {
     }
 
     @PostMapping
-    public ResponseEntity<Property> createProperty(@RequestBody Property property) {
+    public ResponseEntity<Property> createProperty(
+            @RequestBody Property property,
+            @org.springframework.security.core.annotation.AuthenticationPrincipal com.rentfinder.entity.User user
+    ) {
+        property.setOwner(user);
         return ResponseEntity.ok(propertyService.createProperty(property));
     }
 

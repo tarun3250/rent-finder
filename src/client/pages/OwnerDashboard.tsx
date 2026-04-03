@@ -2,14 +2,55 @@ import React, { useState } from "react";
 import api from "../api/api";
 import { useAuth } from "../contexts/AuthContext";
 import { useOwnerData } from "../hooks/useOwnerData";
-import { Plus, Zap, Building2, MapPin, Clock, CheckCircle, ChevronRight, Edit, Trash2 } from "lucide-react";
-import { motion } from "motion/react";
+import { Plus, Zap, Building2, MapPin, Clock, CheckCircle, ChevronRight, Edit, Trash2, X, Upload } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 export const OwnerDashboard: React.FC = () => {
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState<'listings' | 'requests'>('listings');
 
   const { properties, requests, loading, refetch } = useOwnerData(profile?.id);
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newProperty, setNewProperty] = useState({ title: '', price: '', location: '', bhkType: '1 BHK', amenities: '', description: '' });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleAddPropertySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      let imageUrl = null;
+      if (selectedFile) {
+        setUploading(true);
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        const uploadRes = await api.post("/files/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+        imageUrl = uploadRes.data.url;
+      }
+      
+      const payload = {
+        title: newProperty.title,
+        price: parseFloat(newProperty.price),
+        location: newProperty.location,
+        bhkType: newProperty.bhkType,
+        amenities: newProperty.amenities,
+        description: newProperty.description,
+        images: imageUrl ? [{ url: imageUrl }] : []
+      };
+
+      await api.post("/properties", payload);
+      setIsAddModalOpen(false);
+      setNewProperty({ title: '', price: '', location: '', bhkType: '1 BHK', amenities: '', description: '' });
+      setSelectedFile(null);
+      refetch();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleRequestAssistance = async () => {
     try {
@@ -31,7 +72,10 @@ export const OwnerDashboard: React.FC = () => {
           <p className="text-gray-500">Manage your properties and listing requests</p>
         </div>
         <div className="flex gap-4">
-          <button className="px-8 py-4 bg-white border border-gray-100 text-gray-900 font-bold rounded-2xl soft-shadow hover:border-primary-200 transition-all flex items-center gap-2">
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="px-8 py-4 bg-white border border-gray-100 text-gray-900 font-bold rounded-2xl soft-shadow hover:border-primary-200 transition-all flex items-center gap-2"
+          >
             <Plus className="w-5 h-5" /> Add Manually
           </button>
           <button 
@@ -162,6 +206,89 @@ export const OwnerDashboard: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Add Property Modal */}
+      <AnimatePresence>
+        {isAddModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"
+              onClick={() => setIsAddModalOpen(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-2xl bg-white rounded-[2.5rem] p-8 shadow-2xl max-h-[90vh] overflow-y-auto"
+            >
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 bg-gray-50 rounded-full"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              
+              <h3 className="text-3xl font-display font-bold text-gray-900 mb-8">Add New Property</h3>
+              
+              <form onSubmit={handleAddPropertySubmit} className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Property Title</label>
+                    <input required value={newProperty.title} onChange={e => setNewProperty({...newProperty, title: e.target.value})} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500" placeholder="e.g. Modern Penthouse" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Price (₹/month)</label>
+                    <input required value={newProperty.price} onChange={e => setNewProperty({...newProperty, price: e.target.value})} type="number" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500" placeholder="e.g. 25000" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Location</label>
+                    <input required value={newProperty.location} onChange={e => setNewProperty({...newProperty, location: e.target.value})} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500" placeholder="e.g. Koramangala, Bangalore" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Property Type</label>
+                    <select required value={newProperty.bhkType} onChange={e => setNewProperty({...newProperty, bhkType: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500">
+                      <option value="1 BHK">1 BHK</option>
+                      <option value="2 BHK">2 BHK</option>
+                      <option value="3 BHK">3 BHK</option>
+                      <option value="Villa">Villa</option>
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Amenities</label>
+                    <input value={newProperty.amenities} onChange={e => setNewProperty({...newProperty, amenities: e.target.value})} type="text" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500" placeholder="e.g. Gym, Pool, Parking" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
+                    <textarea value={newProperty.description} onChange={e => setNewProperty({...newProperty, description: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 h-24" placeholder="Detailed property description..." />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Property Image</label>
+                    <div className="flex items-center gap-4">
+                      <label className="flex items-center justify-center w-full px-4 py-8 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl hover:bg-gray-100 hover:border-primary-300 transition-all cursor-pointer">
+                        <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files && setSelectedFile(e.target.files[0])} />
+                        <div className="flex flex-col items-center gap-2 text-gray-500">
+                          <Upload className="w-8 h-8 text-primary-400" />
+                          <span className="font-bold">{selectedFile ? selectedFile.name : "Click to upload image"}</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="pt-6 border-t border-gray-100 flex justify-end gap-4">
+                  <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-6 py-3 font-bold text-gray-500 hover:text-gray-700 tracking-wide">
+                    Cancel
+                  </button>
+                  <button type="submit" disabled={uploading} className="px-8 py-3 bg-primary-600 text-white font-bold rounded-xl shadow-lg shadow-primary-200 hover:bg-primary-700 transition-all">
+                    {uploading ? "Uploading & Saving..." : "Publish Listing"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

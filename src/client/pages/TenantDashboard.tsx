@@ -9,6 +9,36 @@ export const TenantDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [budget, setBudget] = useState(150000);
   const [bhk, setBhk] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'discover' | 'bookings'>('discover');
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(false);
+
+  React.useEffect(() => {
+    if (activeTab === 'bookings') {
+      fetchBookings();
+    }
+  }, [activeTab]);
+
+  const fetchBookings = async () => {
+    setLoadingBookings(true);
+    try {
+      const res = await import('../api/api').then(m => m.default.get('/bookings/my-bookings'));
+      setBookings(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingBookings(false);
+    }
+  };
+
+  const handleBook = async (propertyId: string) => {
+    try {
+      await import('../api/api').then(m => m.default.post(`/bookings/${propertyId}`));
+      alert("Booking Request Sent!");
+    } catch (e: any) {
+      alert("Failed to book: " + (e.response?.data?.message || e.message));
+    }
+  };
 
   const { properties, loading, refetch } = useProperties({
     budget,
@@ -33,7 +63,26 @@ export const TenantDashboard: React.FC = () => {
         <aside className="lg:w-80 space-y-10">
           <div className="sticky top-32">
             <h2 className="text-3xl font-display font-bold text-gray-900 mb-8">Filters</h2>
+            <div className="flex gap-4 mb-8">
+              <button 
+                onClick={() => setActiveTab('discover')}
+                className={`flex-1 py-3 text-sm font-bold uppercase tracking-widest transition-all rounded-xl border ${
+                  activeTab === 'discover' ? "bg-primary-600 text-white shadow-lg shadow-primary-200 border-primary-600" : "bg-white text-gray-500 hover:border-primary-200"
+                }`}
+              >
+                Discover
+              </button>
+              <button 
+                onClick={() => setActiveTab('bookings')}
+                className={`flex-1 py-3 text-sm font-bold uppercase tracking-widest transition-all rounded-xl border ${
+                  activeTab === 'bookings' ? "bg-primary-600 text-white shadow-lg shadow-primary-200 border-primary-600" : "bg-white text-gray-500 hover:border-primary-200"
+                }`}
+              >
+                My Visits
+              </button>
+            </div>
             
+            {activeTab === 'discover' && (
             <div className="space-y-8">
               {/* Search */}
               <div className="space-y-3">
@@ -87,11 +136,50 @@ export const TenantDashboard: React.FC = () => {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </aside>
 
         {/* Main Content */}
         <div className="flex-1 space-y-16">
+          {activeTab === 'bookings' ? (
+            <section>
+              <h3 className="text-3xl font-display font-bold text-gray-900 mb-10">My Visit Requests</h3>
+              {loadingBookings ? (
+                <div className="space-y-4">
+                  {[1, 2].map(i => <div key={i} className="h-32 bg-gray-50 rounded-[2.5rem] animate-pulse" />)}
+                </div>
+              ) : bookings.length > 0 ? (
+                <div className="space-y-6">
+                  {bookings.map(book => (
+                    <div key={book.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 soft-shadow flex items-center justify-between">
+                      <div className="flex items-center gap-6">
+                         <img src={book.property.images?.[0]?.imageUrl || `https://picsum.photos/seed/${book.property.id}/200/200`} className="w-24 h-24 rounded-2xl object-cover" alt=""/>
+                         <div>
+                            <h4 className="text-xl font-bold font-display text-gray-900 mb-1">{book.property.title}</h4>
+                            <p className="text-sm text-gray-500 flex items-center gap-1"><MapPin className="w-4 h-4"/> {book.property.location}</p>
+                         </div>
+                      </div>
+                      <div className="text-right">
+                        <span className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${
+                          book.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                          book.status === 'APPROVED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {book.status}
+                        </span>
+                        <p className="text-xs text-gray-400 mt-3 font-bold uppercase tracking-widest">Requested {new Date(book.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-24 bg-white border border-gray-100 rounded-[2.5rem]">
+                   <p className="text-gray-500 font-medium">No visit requests yet. Start discovering properties!</p>
+                </div>
+              )}
+            </section>
+          ) : (
+            <>
           {/* Recommendations Banner */}
           {recommendations.length > 0 && (
             <section className="bg-primary-600 rounded-[2.5rem] p-10 text-white relative overflow-hidden shadow-2xl shadow-primary-100">
@@ -105,7 +193,7 @@ export const TenantDashboard: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {recommendations.map((p) => (
-                    <PropertyCard key={p.id} property={p} isRecommended dark />
+                    <PropertyCard key={p.id} property={p} isRecommended dark onBook={() => handleBook(p.id)} />
                   ))}
                 </div>
               </div>
@@ -130,7 +218,7 @@ export const TenantDashboard: React.FC = () => {
             ) : filteredProperties.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 {filteredProperties.map((p) => (
-                  <PropertyCard key={p.id} property={p} />
+                  <PropertyCard key={p.id} property={p} onBook={() => handleBook(p.id)} />
                 ))}
               </div>
             ) : (
@@ -143,13 +231,15 @@ export const TenantDashboard: React.FC = () => {
               </div>
             )}
           </section>
+          </>
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-const PropertyCard: React.FC<{ property: any; isRecommended?: boolean; dark?: boolean }> = ({ property, isRecommended, dark }) => {
+const PropertyCard: React.FC<{ property: any; isRecommended?: boolean; dark?: boolean; onBook?: () => void }> = ({ property, isRecommended, dark, onBook }) => {
   return (
     <motion.div
       whileHover={{ y: -8 }}
@@ -176,10 +266,12 @@ const PropertyCard: React.FC<{ property: any; isRecommended?: boolean; dark?: bo
             </span>
           )}
         </div>
-        <button className={`absolute top-5 right-5 p-2.5 rounded-full transition-all ${
-          dark ? "bg-white/20 text-white hover:bg-white/30" : "bg-white/90 text-gray-400 hover:text-red-500"
+        <button 
+          onClick={(e) => { e.stopPropagation(); onBook?.(); }}
+          className={`absolute top-5 right-5 px-4 py-2 text-xs font-bold uppercase tracking-widest rounded-full transition-all flex items-center gap-2 ${
+          dark ? "bg-white text-primary-600 hover:bg-gray-100 shadow-xl" : "bg-primary-600 text-white shadow-lg hover:bg-primary-700 hover:shadow-primary-300"
         }`}>
-          <Heart className="w-5 h-5" />
+          Schedule Visit
         </button>
       </div>
       <div className="p-8">

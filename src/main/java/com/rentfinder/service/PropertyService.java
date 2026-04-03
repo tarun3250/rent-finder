@@ -26,6 +26,9 @@ public class PropertyService {
     }
 
     public Property createProperty(Property property) {
+        if (property.getImages() != null) {
+            property.getImages().forEach(img -> img.setProperty(property));
+        }
         return propertyRepository.save(property);
     }
 
