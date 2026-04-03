@@ -1,7 +1,9 @@
 package com.rentfinder.controller;
 
+import com.rentfinder.dto.PropertyMatchResponse;
 import com.rentfinder.entity.Property;
 import com.rentfinder.service.PropertyService;
+import com.rentfinder.service.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,23 +16,19 @@ import java.util.List;
 public class PropertyController {
 
     private final PropertyService propertyService;
+    private final RecommendationService recommendationService;
 
     @GetMapping
-    public ResponseEntity<List<Property>> getAllProperties(
+    public ResponseEntity<?> getAllProperties(
             @RequestParam(required = false) Double budget,
             @RequestParam(required = false) String location,
-            @RequestParam(required = false) Long ownerId
+            @RequestParam(required = false) Long ownerId,
+            @RequestParam(required = false) String bhk
     ) {
         if (ownerId != null) {
             return ResponseEntity.ok(propertyService.getPropertiesByOwner(ownerId));
         }
-        if (budget != null || location != null) {
-            return ResponseEntity.ok(propertyService.searchProperties(
-                    budget != null ? budget : 1000000.0,
-                    location != null ? location : ""
-            ));
-        }
-        return ResponseEntity.ok(propertyService.getAllProperties());
+        return ResponseEntity.ok(recommendationService.getRecommendations(budget, location, bhk));
     }
 
     @PostMapping
@@ -48,11 +46,11 @@ public class PropertyController {
     }
 
     @GetMapping("/recommendations")
-    public ResponseEntity<List<Property>> getRecommendations(
+    public ResponseEntity<List<PropertyMatchResponse>> getRecommendations(
             @RequestParam(required = false, defaultValue = "1000000.0") Double budget,
             @RequestParam(required = false, defaultValue = "") String location,
             @RequestParam(required = false, defaultValue = "") String bhk
     ) {
-        return ResponseEntity.ok(propertyService.getRecommendations(budget, location, bhk));
+        return ResponseEntity.ok(recommendationService.getRecommendations(budget, location, bhk));
     }
 }
