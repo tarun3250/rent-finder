@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "mvn spring-boot:run",
+    "dev:frontend": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "clean": "rm -rf dist",

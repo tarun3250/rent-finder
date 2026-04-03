@@ -18,7 +18,18 @@
 }
 
 @utility glass {
-  @apply bg-white/80 backdrop-blur-md border border-white/20;
+  background-color: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+@utility glass-hover {
+  background-color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
 }
 
 @utility soft-shadow {
@@ -30,7 +41,28 @@
 }
 
 body {
-  @apply bg-[#F9FAFB] text-gray-900 antialiased;
+  @apply bg-[#F9FAFB] text-gray-900 antialiased relative z-0;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.05) 0%, transparent 35%),
+    radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+  z-index: -1;
+  animation: mesh-rotate 60s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes mesh-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 h1, h2, h3, h4 {

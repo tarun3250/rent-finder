@@ -3,6 +3,15 @@ import { Link } from "react-router-dom";
 import { Search, ShieldCheck, Zap, MapPin, ArrowRight, Star, Heart, Building2, Users, CheckCircle } from "lucide-react";
 import { motion } from "motion/react";
 
+const cardVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.1, duration: 0.5, ease: "easeOut" }
+  })
+};
+
 export const Home: React.FC = () => {
   return (
     <div className="space-y-24 pb-24">
@@ -28,7 +37,7 @@ export const Home: React.FC = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="glass p-2 rounded-[2rem] shadow-2xl max-w-3xl mx-auto flex flex-col md:flex-row gap-2"
+              className="glass glass-hover p-2 rounded-[2rem] max-w-3xl mx-auto flex flex-col md:flex-row gap-2 relative z-10 group"
             >
               <div className="flex-1 flex items-center gap-3 px-6 py-4">
                 <Search className="w-5 h-5 text-primary-500" />
@@ -48,7 +57,7 @@ export const Home: React.FC = () => {
                   <option>Delhi</option>
                 </select>
               </div>
-              <button className="bg-primary-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg hover:bg-primary-700 transition-all shadow-lg shadow-primary-200">
+              <button className="bg-primary-600 text-white px-10 py-4 rounded-[1.5rem] font-bold text-lg hover:bg-primary-500 transition-all shadow-lg shadow-primary-500/30 group-hover:shadow-primary-500/50">
                 Search
               </button>
             </motion.div>
@@ -84,8 +93,8 @@ export const Home: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-          {[1, 2, 3].map((i) => (
-            <FeaturedCard key={i} id={i.toString()} />
+          {[1, 2, 3].map((i, index) => (
+            <FeaturedCard key={i} id={i.toString()} index={index} />
           ))}
         </div>
       </section>
@@ -129,10 +138,15 @@ export const Home: React.FC = () => {
   );
 };
 
-const FeaturedCard: React.FC<{ id: string }> = ({ id }) => (
+const FeaturedCard: React.FC<{ id: string; index?: number }> = ({ id, index = 0 }) => (
   <motion.div 
-    whileHover={{ y: -10 }}
-    className="premium-card group overflow-hidden"
+    custom={index}
+    initial="hidden"
+    whileInView="visible"
+    viewport={{ once: true, margin: "-50px" }}
+    variants={cardVariants}
+    whileHover={{ y: -10, scale: 1.02 }}
+    className="premium-card group overflow-hidden bg-white/70 backdrop-blur-lg border-white/40 hover:border-primary-300"
   >
     <div className="relative h-72 overflow-hidden">
       <img
