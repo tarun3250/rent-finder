@@ -6,7 +6,7 @@ import { CheckCircle, XCircle, Clock, Users, Building2, TrendingUp, MapPin } fro
 export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'requests' | 'properties'>('requests');
 
-  const { requests, properties, loading, refetch } = useAdminData();
+  const { requests, properties, stats, loading, refetch } = useAdminData();
 
   const handleUpdateStatus = async (requestId: number, newStatus: string) => {
     try {
@@ -45,8 +45,8 @@ export const AdminDashboard: React.FC = () => {
         {[
           { label: 'Pending Requests', value: requests.filter(r => r.status === 'PENDING').length, icon: Clock, color: 'yellow' },
           { label: 'Total Properties', value: properties.length, icon: Building2, color: 'primary' },
-          { label: 'Active Users', value: '...', icon: Users, color: 'green' },
-          { label: 'Revenue', value: '₹0', icon: TrendingUp, color: 'indigo' }
+          { label: 'Active Users', value: stats.activeUsers, icon: Users, color: 'green' },
+          { label: 'Revenue', value: `₹${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: 'indigo' }
         ].map((stat, i) => (
           <div key={i} className="bg-white p-6 rounded-3xl border border-gray-100 soft-shadow">
             <div className={`w-12 h-12 bg-${stat.color}-50 text-${stat.color}-600 rounded-2xl flex items-center justify-center mb-4`}>

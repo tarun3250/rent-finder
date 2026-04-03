@@ -3,6 +3,7 @@ import { useProperties, useRecommendations } from "../hooks/useProperties";
 import { useAuth } from "../contexts/AuthContext";
 import { Search, MapPin, Star, Heart, Zap, ShieldCheck } from "lucide-react";
 import { motion } from "motion/react";
+import { useToast } from "../contexts/ToastContext";
 
 export const TenantDashboard: React.FC = () => {
   const { profile } = useAuth();
@@ -12,6 +13,7 @@ export const TenantDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'discover' | 'bookings'>('discover');
   const [bookings, setBookings] = useState<any[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(false);
+  const { showToast } = useToast();
 
   React.useEffect(() => {
     if (activeTab === 'bookings') {
@@ -34,9 +36,9 @@ export const TenantDashboard: React.FC = () => {
   const handleBook = async (propertyId: string) => {
     try {
       await import('../api/api').then(m => m.default.post(`/bookings/${propertyId}`));
-      alert("Booking Request Sent!");
+      showToast("Booking Request Sent Successfully!", "success");
     } catch (e: any) {
-      alert("Failed to book: " + (e.response?.data?.message || e.message));
+      showToast("Failed to book: " + (e.response?.data?.message || e.message), "error");
     }
   };
 

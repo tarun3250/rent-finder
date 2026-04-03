@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./client/contexts/AuthContext";
+import { ToastProvider } from "./client/contexts/ToastContext";
 import { Layout } from "./client/components/Layout";
 import { Auth } from "./client/pages/Auth";
 import { Home } from "./client/pages/Home";
@@ -20,46 +21,48 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; role?: string }> = (
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Layout>
-          <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Auth />} />
-              
-              {/* Tenant Routes */}
-              <Route path="/search" element={
-                <ProtectedRoute role="TENANT">
-                  <TenantDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/recommendations" element={
-                <ProtectedRoute role="TENANT">
-                  <TenantDashboard />
-                </ProtectedRoute>
-              } />
+    <ToastProvider>
+      <AuthProvider>
+        <Router>
+          <Layout>
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Auth />} />
+                
+                {/* Tenant Routes */}
+                <Route path="/search" element={
+                  <ProtectedRoute role="TENANT">
+                    <TenantDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/recommendations" element={
+                  <ProtectedRoute role="TENANT">
+                    <TenantDashboard />
+                  </ProtectedRoute>
+                } />
 
-              {/* Owner Routes */}
-              <Route path="/owner/listings" element={
-                <ProtectedRoute role="OWNER">
-                  <OwnerDashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/owner/request" element={
-                <ProtectedRoute role="OWNER">
-                  <OwnerDashboard />
-                </ProtectedRoute>
-              } />
+                {/* Owner Routes */}
+                <Route path="/owner/listings" element={
+                  <ProtectedRoute role="OWNER">
+                    <OwnerDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/owner/request" element={
+                  <ProtectedRoute role="OWNER">
+                    <OwnerDashboard />
+                  </ProtectedRoute>
+                } />
 
-              {/* Admin Routes */}
-              <Route path="/admin" element={
-                <ProtectedRoute role="ADMIN">
-                  <AdminDashboard />
-                </ProtectedRoute>
-              } />
-            </Routes>
-          </Layout>
-        </Router>
-      </AuthProvider>
+                {/* Admin Routes */}
+                <Route path="/admin" element={
+                  <ProtectedRoute role="ADMIN">
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } />
+              </Routes>
+            </Layout>
+          </Router>
+        </AuthProvider>
+    </ToastProvider>
   );
 }
