@@ -1,0 +1,5 @@
+{
+  "name": "Assisted Rental Home Finder",
+  "description": "A premium, full-stack rental home finder platform built with React, Spring Boot (Java), and MySQL. Features smart matching and assisted listing workflows.",
+  "requestFramePermissions": ["geolocation"]
+}
